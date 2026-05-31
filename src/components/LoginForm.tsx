@@ -18,7 +18,6 @@ import {
   useTheme,
 } from "@mui/material";
 import {
-  Terminal as TerminalIcon,
   Visibility,
   VisibilityOff,
   Key,
@@ -41,6 +40,8 @@ interface LoginFormProps {
   authMethod: AuthMethod;
   password: string;
   privateKey: string;
+  /** Optional remote command (SSH -t equivalent). */
+  command: string;
   /** "true" when a connection attempt is in progress. */
   connecting: boolean;
   /** Error message to display. */
@@ -71,6 +72,7 @@ export default function LoginForm({
   authMethod,
   password,
   privateKey,
+  command,
   connecting,
   error,
   savedConfigs,
@@ -115,12 +117,14 @@ export default function LoginForm({
       >
         {/* ── Header ─────────────────────────────────── */}
         <Box sx={{ textAlign: "center", mb: 3 }}>
-          <TerminalIcon color="primary" sx={{ fontSize: 36, mb: 1 }} />
+          <Box
+            component="img"
+            src="/icon.png"
+            alt="SSH Client"
+            sx={{ width: 100, height: 100 }}
+          />
           <Typography variant="h5" sx={{ fontWeight: 600 }} gutterBottom>
             SSH Client
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Connect to a remote server via SSH
           </Typography>
         </Box>
 
@@ -165,7 +169,6 @@ export default function LoginForm({
             placeholder="my-server"
             value={label}
             onChange={(e) => onChange("label", e.target.value)}
-            helperText="Auto-generated from host & username. Edit to customize."
             size="small"
           />
 
@@ -262,6 +265,15 @@ export default function LoginForm({
             />
           )}
 
+          {/* Remote command (-t flag) */}
+          <TextField
+            label="Remote Command (-t)"
+            placeholder="/jffs/fish"
+            value={command}
+            onChange={(e) => onChange("command", e.target.value)}
+            size="small"
+          />
+
           {/* Error */}
           {error && (
             <FormHelperText error sx={{ mx: 0 }}>
@@ -274,7 +286,6 @@ export default function LoginForm({
             <Button
               type="submit"
               variant="contained"
-              startIcon={connecting ? undefined : <TerminalIcon />}
               loading={connecting}
               loadingPosition="start"
               disabled={!host || !username}

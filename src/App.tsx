@@ -26,6 +26,7 @@ export default function App() {
   const [authMethod, setAuthMethod] = useState<AuthMethod>("password");
   const [password, setPassword] = useState("");
   const [privateKey, setPrivateKey] = useState("");
+  const [command, setCommand] = useState("");
   // Track whether the user has manually edited the config label
   const [labelEdited, setLabelEdited] = useState(false);
 
@@ -70,6 +71,7 @@ export default function App() {
       username: setUsername,
       password: setPassword,
       privateKey: setPrivateKey,
+      command: setCommand,
     };
     setters[field]?.(value);
   }, []);
@@ -84,6 +86,7 @@ export default function App() {
       setAuthMethod(config.authMethod);
       setPassword(config.password);
       setPrivateKey(config.privateKey);
+      setCommand(config.command ?? "");
       setLabelEdited(true);
     },
     [],
@@ -101,10 +104,11 @@ export default function App() {
       authMethod,
       password,
       privateKey,
+      command,
     };
     saveConfig(config);
     reloadConfigs();
-  }, [label, host, port, username, authMethod, password, privateKey, reloadConfigs]);
+  }, [label, host, port, username, authMethod, password, privateKey, command, reloadConfigs]);
 
   // ── Delete a saved config ────────────────────────────────────
   const handleDeleteConfig = useCallback(
@@ -137,6 +141,11 @@ export default function App() {
         params.password = password;
       }
 
+      // Pass the remote command if provided (SSH -t equivalent)
+      if (command.trim()) {
+        params.command = command.trim();
+      }
+
       await invoke("ssh_connect", { params });
       setConnectionState("connected");
 
@@ -157,6 +166,7 @@ export default function App() {
         // Only persist credentials if the connection succeeded
         password,
         privateKey,
+        command,
       };
       saveConfig(config);
       reloadConfigs();
@@ -164,7 +174,7 @@ export default function App() {
       setError(String(e));
       setConnectionState("error");
     }
-  }, [host, port, username, authMethod, password, privateKey, reloadConfigs, savedConfigs]);
+  }, [host, port, username, authMethod, password, privateKey, command, reloadConfigs, savedConfigs]);
 
   // ── Disconnect from SSH server ───────────────────────────────
   const handleDisconnect = useCallback(async () => {
@@ -188,6 +198,7 @@ export default function App() {
       authMethod,
       password,
       privateKey,
+      command,
       connecting: connectionState === "connecting",
       error,
       savedConfigs,
@@ -206,6 +217,7 @@ export default function App() {
       authMethod,
       password,
       privateKey,
+      command,
       connectionState,
       error,
       savedConfigs,

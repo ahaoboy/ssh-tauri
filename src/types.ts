@@ -17,6 +17,8 @@ export interface ConnectParams {
   username: string;
   password?: string;
   private_key?: string;
+  /** Optional remote command to execute instead of the default shell (SSH -t flag). */
+  command?: string;
   cols: number;
   rows: number;
 }
@@ -31,4 +33,6 @@ export interface SavedConfig {
   authMethod: AuthMethod;
   password: string;
   privateKey: string;
+  /** Optional remote command (SSH -t flag equivalent). */
+  command: string;
 }
