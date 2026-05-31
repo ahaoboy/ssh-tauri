@@ -1,0 +1,71 @@
+// ── Configuration persistence using localStorage ────────────────────────
+
+import type { SavedConfig } from "../types";
+
+const STORAGE_KEY = "ssh:configs";
+const INDEX_KEY = "ssh:config-index";
+
+/** Read all stored config IDs in order. */
+function getIndex(): string[] {
+  try {
+    const raw = localStorage.getItem(INDEX_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Persist the index array. */
+function saveIndex(ids: string[]): void {
+  localStorage.setItem(INDEX_KEY, JSON.stringify(ids));
+}
+
+/** Load all saved configurations, ordered by index. */
+export function loadAllConfigs(): SavedConfig[] {
+  const ids = getIndex();
+  const configs: SavedConfig[] = [];
+  for (const id of ids) {
+    const raw = localStorage.getItem(`${STORAGE_KEY}:${id}`);
+    if (raw) {
+      try {
+        configs.push(JSON.parse(raw) as SavedConfig);
+      } catch {
+        // Skip corrupted entries
+      }
+    }
+  }
+  return configs;
+}
+
+/** Load a single configuration by id. */
+export function loadConfig(id: string): SavedConfig | null {
+  const raw = localStorage.getItem(`${STORAGE_KEY}:${id}`);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as SavedConfig;
+  } catch {
+    return null;
+  }
+}
+
+/** Save a configuration (creates or updates). Returns the saved config. */
+export function saveConfig(config: SavedConfig): void {
+  const ids = getIndex();
+  if (!ids.includes(config.id)) {
+    ids.push(config.id);
+    saveIndex(ids);
+  }
+  localStorage.setItem(`${STORAGE_KEY}:${config.id}`, JSON.stringify(config));
+}
+
+/** Delete a configuration by id. */
+export function deleteConfig(id: string): void {
+  const ids = getIndex().filter((i) => i !== id);
+  saveIndex(ids);
+  localStorage.removeItem(`${STORAGE_KEY}:${id}`);
+}
+
+/** Generate a unique id for a new config based on timestamp. */
+export function generateConfigId(): string {
+  return `cfg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
