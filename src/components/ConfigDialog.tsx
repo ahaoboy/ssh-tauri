@@ -93,7 +93,7 @@ export default function ConfigDialog({
                     primary={cfg.label}
                     secondary={`${cfg.username}@${cfg.host}:${cfg.port}  ·  ${cfg.authMethod === "password" ? "Password" : "Key"}`}
                     slotProps={{
-                      primary: { variant: "body2", fontWeight: 500 },
+                      primary: { variant: "body2", sx: { fontWeight: 500 } },
                       secondary: {
                         variant: "caption",
                         sx: { fontFamily: "monospace" },

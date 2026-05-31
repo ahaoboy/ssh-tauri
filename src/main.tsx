@@ -1,6 +1,6 @@
 // ── Application entry point ───────────────────────────────────────────────
 
-import { StrictMode, useMemo, useState, useEffect } from "react";
+import { StrictMode, useMemo } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider } from "@mui/material/styles";
 import { useMediaQuery } from "@mui/material";
