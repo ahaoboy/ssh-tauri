@@ -19,12 +19,15 @@ import ConfigDialog from "./components/ConfigDialog";
 
 export default function App() {
   // ── Connection form state ────────────────────────────────────
+  const [label, setLabel] = useState("");
   const [host, setHost] = useState("");
   const [port, setPort] = useState("22");
   const [username, setUsername] = useState("");
   const [authMethod, setAuthMethod] = useState<AuthMethod>("password");
   const [password, setPassword] = useState("");
   const [privateKey, setPrivateKey] = useState("");
+  // Track whether the user has manually edited the config label
+  const [labelEdited, setLabelEdited] = useState(false);
 
   // ── Connection lifecycle state ───────────────────────────────
   const [connectionState, setConnectionState] =
@@ -45,8 +48,22 @@ export default function App() {
     setSavedConfigs(loadAllConfigs());
   }, []);
 
+  // ── Auto-generate default label from host + username ─────────
+  useEffect(() => {
+    if (!labelEdited && host && username) {
+      setLabel(`${username}@${host}`);
+    } else if (!host && !username) {
+      setLabel("");
+    }
+  }, [host, username, labelEdited]);
+
   // ── Update a single form field ───────────────────────────────
   const handleFieldChange = useCallback((field: string, value: string) => {
+    if (field === "label") {
+      setLabel(value);
+      setLabelEdited(true);
+      return;
+    }
     const setters: Record<string, (v: string) => void> = {
       host: setHost,
       port: setPort,
@@ -60,12 +77,14 @@ export default function App() {
   // ── Load a saved config into the form ────────────────────────
   const handleLoadConfig = useCallback(
     (config: SavedConfig) => {
+      setLabel(config.label);
       setHost(config.host);
       setPort(config.port);
       setUsername(config.username);
       setAuthMethod(config.authMethod);
       setPassword(config.password);
       setPrivateKey(config.privateKey);
+      setLabelEdited(true);
     },
     [],
   );
@@ -75,7 +94,7 @@ export default function App() {
     if (!host || !username) return;
     const config: SavedConfig = {
       id: generateConfigId(),
-      label: `${username}@${host}`,
+      label: label || `${username}@${host}`,
       host,
       port,
       username,
@@ -85,7 +104,7 @@ export default function App() {
     };
     saveConfig(config);
     reloadConfigs();
-  }, [host, port, username, authMethod, password, privateKey, reloadConfigs]);
+  }, [label, host, port, username, authMethod, password, privateKey, reloadConfigs]);
 
   // ── Delete a saved config ────────────────────────────────────
   const handleDeleteConfig = useCallback(
@@ -120,11 +139,32 @@ export default function App() {
 
       await invoke("ssh_connect", { params });
       setConnectionState("connected");
+
+      // Auto-save config on successful connection.
+      // If a config with the same host+username already exists, update it;
+      // otherwise create a new one.
+      const existing = savedConfigs.find(
+        (c) => c.host === host && c.username === username,
+      );
+      const config: SavedConfig = {
+        id: existing?.id ?? generateConfigId(),
+        // Use the user's custom label, or the existing label, or the default
+        label: label || existing?.label || `${username}@${host}`,
+        host,
+        port,
+        username,
+        authMethod,
+        // Only persist credentials if the connection succeeded
+        password,
+        privateKey,
+      };
+      saveConfig(config);
+      reloadConfigs();
     } catch (e) {
       setError(String(e));
       setConnectionState("error");
     }
-  }, [host, port, username, authMethod, password, privateKey]);
+  }, [host, port, username, authMethod, password, privateKey, reloadConfigs, savedConfigs]);
 
   // ── Disconnect from SSH server ───────────────────────────────
   const handleDisconnect = useCallback(async () => {
@@ -141,6 +181,7 @@ export default function App() {
 
   const loginFormProps = useMemo(
     () => ({
+      label,
       host,
       port,
       username,
@@ -158,6 +199,7 @@ export default function App() {
       onSaveConfig: handleSaveConfig,
     }),
     [
+      label,
       host,
       port,
       username,

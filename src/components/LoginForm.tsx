@@ -32,6 +32,8 @@ import { normalizePrivateKey } from "../utils/keyNormalizer";
 // ── Props ────────────────────────────────────────────────────────────────
 
 interface LoginFormProps {
+  /** Config label (auto-generated default, user-customizable). */
+  label: string;
   /** Current form values. */
   host: string;
   port: string;
@@ -62,6 +64,7 @@ interface LoginFormProps {
 // ── Component ────────────────────────────────────────────────────────────
 
 export default function LoginForm({
+  label,
   host,
   port,
   username,
@@ -113,7 +116,7 @@ export default function LoginForm({
         {/* ── Header ─────────────────────────────────── */}
         <Box sx={{ textAlign: "center", mb: 3 }}>
           <TerminalIcon color="primary" sx={{ fontSize: 36, mb: 1 }} />
-          <Typography variant="h5" fontWeight={600} gutterBottom>
+          <Typography variant="h5" sx={{ fontWeight: 600 }} gutterBottom>
             SSH Client
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -156,6 +159,16 @@ export default function LoginForm({
           }}
           sx={{ display: "flex", flexDirection: "column", gap: 2 }}
         >
+          {/* Config name */}
+          <TextField
+            label="Config Name"
+            placeholder="my-server"
+            value={label}
+            onChange={(e) => onChange("label", e.target.value)}
+            helperText="Auto-generated from host & username. Edit to customize."
+            size="small"
+          />
+
           {/* Host + Port */}
           <Box sx={{ display: "flex", gap: 1.5 }}>
             <TextField
