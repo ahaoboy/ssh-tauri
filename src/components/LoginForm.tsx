@@ -97,6 +97,8 @@ export default function LoginForm({
         alignItems: "center",
         justifyContent: "center",
         p: 2,
+        pt: "calc(var(--safe-area-top) + 16px)",
+        pb: "calc(var(--safe-area-bottom) + 16px)",
       }}
     >
       <Paper

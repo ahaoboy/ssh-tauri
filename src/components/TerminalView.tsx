@@ -147,6 +147,7 @@ export default function TerminalView({
         flexDirection: "column",
         height: "100dvh",
         bgcolor: TERMINAL_THEME.background,
+        pt: "var(--safe-area-top)",
       }}
     >
       {/* ── Header bar ──────────────────────────────── */}

@@ -1,8 +1,19 @@
-/* ── Minimal global overrides (MUI handles the rest) ───────────────────── */
+/* ── Global overrides ──────────────────────────────────────────────────── */
 
 /* Remove default body margin (MUI CssBaseline handles this, but as a safety net) */
 body {
   margin: 0;
+}
+
+/*
+ * Safe-area insets for mobile (Android status bar / notch).
+ * The viewport meta tag must include `viewport-fit=cover` for these to work.
+ */
+:root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
 }
 
 /* xterm.js blends into the terminal container */
