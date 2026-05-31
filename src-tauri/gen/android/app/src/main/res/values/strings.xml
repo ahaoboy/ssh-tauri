@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">ssh-tauri</string>
+    <string name="main_activity_title">ssh-tauri</string>
+</resources>

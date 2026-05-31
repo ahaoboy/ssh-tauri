@@ -1,6 +1,6 @@
 use russh::client::{self, Handler};
-use russh::Channel;
 use russh::keys::{load_secret_key, ssh_key, PrivateKeyWithHashAlg};
+use russh::Channel;
 use std::sync::{Arc, Mutex};
 use tauri::Emitter;
 
@@ -229,10 +229,7 @@ async fn ssh_connect(
 
 /// Send terminal input to the SSH session.
 #[tauri::command]
-async fn ssh_write(
-    state: tauri::State<'_, AppState>,
-    data: String,
-) -> Result<(), String> {
+async fn ssh_write(state: tauri::State<'_, AppState>, data: String) -> Result<(), String> {
     let ssh = state.ssh.lock().map_err(|e| e.to_string())?;
     if let Some(ref tx) = ssh.control_tx {
         tx.send(ControlMsg::Data(data.into_bytes()))
@@ -278,9 +275,7 @@ async fn ssh_disconnect(
 
 /// Check whether an SSH session is currently active.
 #[tauri::command]
-async fn ssh_is_connected(
-    state: tauri::State<'_, AppState>,
-) -> Result<bool, String> {
+async fn ssh_is_connected(state: tauri::State<'_, AppState>) -> Result<bool, String> {
     let ssh = state.ssh.lock().map_err(|e| e.to_string())?;
     Ok(ssh.handle.is_some())
 }
@@ -289,8 +284,11 @@ async fn ssh_is_connected(
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .manage(AppState {
             ssh: Mutex::new(SshState {
                 handle: None,
@@ -304,7 +302,14 @@ pub fn run() {
             ssh_resize,
             ssh_disconnect,
             ssh_is_connected,
-        ])
+        ]);
+
+    #[cfg(target_os = "windows")]
+    let builder = builder
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_single_instance::init(|_app, _args, _cwd| {}));
+
+    builder
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
