@@ -60,6 +60,10 @@ interface LoginFormProps {
   onSaveConfig: () => void;
   /** Called to delete the currently selected config. */
   onDeleteConfig: (id: string) => void;
+  /** Currently selected config ID (controlled). */
+  selectedConfigId: string;
+  /** Called when the dropdown selection changes. */
+  onSelectConfig: (id: string) => void;
 }
 
 /** Return a fresh default config object (no shared reference risk). */
@@ -97,16 +101,17 @@ export default function LoginForm({
   onLoadConfig,
   onSaveConfig,
   onDeleteConfig,
+  selectedConfigId,
+  onSelectConfig,
 }: LoginFormProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedConfigId, setSelectedConfigId] = useState("");
 
   /** Track manual edits to clear the dropdown selection. */
   const handleFieldChange = useCallback(
     (field: string, value: string) => {
-      setSelectedConfigId("");
+      onSelectConfig("");
       onChange(field, value);
     },
     [onChange],
@@ -170,13 +175,13 @@ export default function LoginForm({
             onChange={(e) => {
               const id = e.target.value;
               if (id === "__new__") {
-                setSelectedConfigId("");
+                onSelectConfig("");
                 onLoadConfig(getDefaultConfig());
                 return;
               }
               const cfg = savedConfigs.find((c) => c.id === id);
               if (cfg) {
-                setSelectedConfigId(cfg.id);
+                onSelectConfig(cfg.id);
                 onLoadConfig(cfg);
               }
             }}
@@ -253,7 +258,7 @@ export default function LoginForm({
               value={authMethod}
               label="Authentication"
               onChange={(e) => {
-                setSelectedConfigId("");
+                onSelectConfig("");
                 onAuthMethodChange(e.target.value as AuthMethod);
               }}
             >
@@ -353,7 +358,7 @@ export default function LoginForm({
                 color="error"
                 onClick={() => {
                   const id = selectedConfigId;
-                  setSelectedConfigId("");
+                  onSelectConfig("");
                   onDeleteConfig(id);
                   onLoadConfig(getDefaultConfig());
                 }}

@@ -36,6 +36,8 @@ export default function App() {
 
   // ── Config management state ──────────────────────────────────
   const [savedConfigs, setSavedConfigs] = useState<SavedConfig[]>([]);
+  /** Currently selected config ID (synced across connect/disconnect). */
+  const [selectedConfigId, setSelectedConfigId] = useState("");
 
   // Load saved configs on mount
   useEffect(() => {
@@ -86,6 +88,7 @@ export default function App() {
       setPrivateKey(config.privateKey);
       setCommand(config.command ?? "");
       setLabelEdited(true);
+      setSelectedConfigId(config.id || "");
     },
     [],
   );
@@ -168,6 +171,7 @@ export default function App() {
       };
       saveConfig(config);
       reloadConfigs();
+      setSelectedConfigId(config.id);
     } catch (e) {
       setError(String(e));
       setConnectionState("error");
@@ -206,6 +210,8 @@ export default function App() {
       onLoadConfig: handleLoadConfig,
       onSaveConfig: handleSaveConfig,
       onDeleteConfig: handleDeleteConfig,
+      selectedConfigId,
+      onSelectConfig: setSelectedConfigId,
     }),
     [
       label,
@@ -224,6 +230,7 @@ export default function App() {
       handleLoadConfig,
       handleSaveConfig,
       handleDeleteConfig,
+      selectedConfigId,
     ],
   );
 
