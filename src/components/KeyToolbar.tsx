@@ -1,7 +1,7 @@
 // ── Collapsible virtual keyboard toolbar ────────────────────────────────
 
-import { useState } from "react";
-import { Box, Button, IconButton, Stack } from "@mui/material";
+import { Box, Button, Stack } from "@mui/material";
+import { useRef, useState, useEffect } from "react";
 import {
   KeyboardArrowUp,
   KeyboardArrowDown,
@@ -12,21 +12,33 @@ import {
   KeyboardReturn,
   ContentCopy,
   ContentPaste,
-  KeyboardDoubleArrowDown,
 } from "@mui/icons-material";
 import { KEY_SEQUENCES } from "../constants/terminal";
 
 // ── Props ────────────────────────────────────────────────────────────────
 
 interface KeyToolbarProps {
-  /** Send raw bytes to the SSH session. */
   onSendKey: (data: string) => void;
+  open: boolean;
 }
 
 // ── Component ────────────────────────────────────────────────────────────
 
-export default function KeyToolbar({ onSendKey }: KeyToolbarProps) {
-  const [open, setOpen] = useState(false);
+export default function KeyToolbar({ onSendKey, open }: KeyToolbarProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [narrow, setNarrow] = useState(false);
+
+  // ── Dynamically decide 1-row vs 2-row layout ───────────────────
+  // Total minimum width ≈ 9 buttons × 44px + 8 gaps × 6px + 2×12px padding
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setNarrow(entry.contentRect.width < 440);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   /** Send a named virtual key sequence. */
   const handlePress = (id: string) => {
@@ -46,6 +58,7 @@ export default function KeyToolbar({ onSendKey }: KeyToolbarProps) {
 
   return (
     <Box
+      ref={containerRef}
       sx={{
         borderBottom: 1,
         borderColor: "divider",
@@ -53,56 +66,36 @@ export default function KeyToolbar({ onSendKey }: KeyToolbarProps) {
         backdropFilter: "blur(8px)",
       }}
     >
-      {/* Toggle chevron */}
-      <Box sx={{ display: "flex", justifyContent: "center", py: 0.5 }}>
-        <IconButton
-          size="small"
-          onClick={() => setOpen((v) => !v)}
-          sx={{ color: "text.secondary" }}
-        >
-          <KeyboardDoubleArrowDown
-            sx={{
-              fontSize: 18,
-              transform: open ? "rotate(180deg)" : "none",
-              transition: "transform 0.2s",
-            }}
-          />
-        </IconButton>
-      </Box>
-
       {open && (
-        <Stack spacing={1} sx={{ px: 1.5, pb: 1.5 }}>
-          {/* Row 1: arrows + tab + del */}
-          <Stack direction="row" spacing={0.8} sx={{ justifyContent: "center" }}>
+        narrow ? (
+          <Stack spacing={1} sx={{ px: 1.5, pb: 1.5 }}>
+            <Stack direction="row" spacing={0.8} sx={{ justifyContent: "center" }}>
+              <KeyBtn icon={<KeyboardArrowLeft />} onClick={() => handlePress("arrowLeft")} />
+              <KeyBtn icon={<KeyboardArrowUp />} onClick={() => handlePress("arrowUp")} />
+              <KeyBtn icon={<KeyboardArrowDown />} onClick={() => handlePress("arrowDown")} />
+              <KeyBtn icon={<KeyboardArrowRight />} onClick={() => handlePress("arrowRight")} />
+              <KeyBtn icon={<Tab />} onClick={() => handlePress("tab")} label="Tab" />
+              <KeyBtn icon={<BackspaceOutlined />} onClick={() => handlePress("delete")} label="Del" />
+            </Stack>
+            <Stack direction="row" spacing={0.8} sx={{ justifyContent: "center" }}>
+              <KeyBtn icon={<KeyboardReturn />} onClick={() => handlePress("enter")} label="Enter" sx={{ flex: 1, maxWidth: 120 }} />
+              <KeyBtn icon={<ContentCopy />} onClick={() => handlePress("ctrlC")} label="C" color="warning" />
+              <KeyBtn icon={<ContentPaste />} onClick={handlePaste} label="V" color="info" />
+            </Stack>
+          </Stack>
+        ) : (
+          <Stack direction="row" spacing={0.8} sx={{ px: 1.5, pb: 1.5, justifyContent: "center", flexWrap: "wrap" }}>
             <KeyBtn icon={<KeyboardArrowLeft />} onClick={() => handlePress("arrowLeft")} />
             <KeyBtn icon={<KeyboardArrowUp />} onClick={() => handlePress("arrowUp")} />
             <KeyBtn icon={<KeyboardArrowDown />} onClick={() => handlePress("arrowDown")} />
             <KeyBtn icon={<KeyboardArrowRight />} onClick={() => handlePress("arrowRight")} />
             <KeyBtn icon={<Tab />} onClick={() => handlePress("tab")} label="Tab" />
             <KeyBtn icon={<BackspaceOutlined />} onClick={() => handlePress("delete")} label="Del" />
+            <KeyBtn icon={<KeyboardReturn />} onClick={() => handlePress("enter")} label="Enter" />
+            <KeyBtn icon={<ContentCopy />} onClick={() => handlePress("ctrlC")} label="C" color="warning" />
+            <KeyBtn icon={<ContentPaste />} onClick={handlePaste} label="V" color="info" />
           </Stack>
-          {/* Row 2: enter + ctrl+c + paste */}
-          <Stack direction="row" spacing={0.8} sx={{ justifyContent: "center" }}>
-            <KeyBtn
-              icon={<KeyboardReturn />}
-              onClick={() => handlePress("enter")}
-              label="Enter"
-              sx={{ flex: 1, maxWidth: 120 }}
-            />
-            <KeyBtn
-              icon={<ContentCopy />}
-              onClick={() => handlePress("ctrlC")}
-              label="C"
-              color="warning"
-            />
-            <KeyBtn
-              icon={<ContentPaste />}
-              onClick={handlePaste}
-              label="V"
-              color="info"
-            />
-          </Stack>
-        </Stack>
+        )
       )}
     </Box>
   );

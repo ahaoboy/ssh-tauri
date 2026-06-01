@@ -9,7 +9,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { Terminal as TerminalIcon, Logout, ScreenRotation } from "@mui/icons-material";
+import { Terminal as TerminalIcon, Logout, ScreenRotation, KeyboardDoubleArrowDown } from "@mui/icons-material";
 
 // ── Props ────────────────────────────────────────────────────────────────
 
@@ -19,6 +19,10 @@ interface TerminalHeaderProps {
   port: string;
   onDisconnect: () => void;
   onToggleOrientation: () => void;
+  /** Toolbar open state + toggle — shown only on Android. */
+  toolbarOpen: boolean;
+  onToggleToolbar: () => void;
+  showToolbarToggle: boolean;
 }
 
 // ── Component ────────────────────────────────────────────────────────────
@@ -29,6 +33,9 @@ export default function TerminalHeader({
   port,
   onDisconnect,
   onToggleOrientation,
+  toolbarOpen,
+  onToggleToolbar,
+  showToolbarToggle,
 }: TerminalHeaderProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -63,6 +70,23 @@ export default function TerminalHeader({
         >
           <ScreenRotation sx={{ fontSize: 18 }} />
         </IconButton>
+
+        {showToolbarToggle && (
+          <IconButton
+            size="small"
+            color="inherit"
+            onClick={onToggleToolbar}
+            title="Toggle keyboard toolbar"
+          >
+            <KeyboardDoubleArrowDown
+              sx={{
+                fontSize: 18,
+                transform: toolbarOpen ? "rotate(180deg)" : "none",
+                transition: "transform 0.2s",
+              }}
+            />
+          </IconButton>
+        )}
 
         <Button
           size="small"

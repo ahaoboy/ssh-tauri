@@ -35,6 +35,8 @@ export default function TerminalView({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [forcedRotation, setForcedRotation] = useState(0);
+  /** Toolbar open state lives here so it survives orientation changes. */
+  const [toolbarOpen, setToolbarOpen] = useState(false);
 
   const terminalRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
@@ -156,9 +158,12 @@ export default function TerminalView({
         port={port}
         onDisconnect={onDisconnect}
         onToggleOrientation={handleToggleOrientation}
+        toolbarOpen={toolbarOpen}
+        onToggleToolbar={() => setToolbarOpen((v) => !v)}
+        showToolbarToggle={isAndroid()}
       />
 
-      {isMobile && <KeyToolbar onSendKey={sendKey} />}
+      {isAndroid() && <KeyToolbar onSendKey={sendKey} open={toolbarOpen} />}
 
       <Box
         ref={terminalRef}
