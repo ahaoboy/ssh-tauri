@@ -5,6 +5,12 @@ body {
   margin: 0;
 }
 
+/* Disable tap highlight on mobile — prevents dark flash on touch */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
 /*
  * Safe-area insets for mobile (Android status bar / notch).
  * The viewport meta tag must include `viewport-fit=cover` for these to work.
