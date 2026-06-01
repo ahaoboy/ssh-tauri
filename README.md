@@ -1,5 +1,7 @@
 <p align="center">
-  <img src="public/icon.png" alt="SSH Client" width="96" />
+  <a href="https://github.com/ahaoboy/ssh-tauri" target="_blank" rel="noopener">
+    <img src="public/icon.png" alt="SSH Client" width="96" />
+  </a>
 </p>
 
 <h1 align="center">SSH Client — Tauri Edition</h1>
@@ -11,6 +13,24 @@
 </p>
 
 ---
+
+## Download
+
+> Links point to the **latest release** assets.
+
+| Platform | Download |
+|---|---|
+| 🪟 Windows (installer) | [ssh-tauri_windows_x64.exe](https://github.com/ahaoboy/ssh-tauri/releases/latest/download/ssh-tauri_windows_x64.exe) |
+| 🪟 Windows (MSI) | [ssh-tauri_x64_en-US.msi](https://github.com/ahaoboy/ssh-tauri/releases/latest/download/ssh-tauri_x64_en-US.msi) |
+| 🍎 macOS (Intel) | [ssh-tauri_darwin_x64](https://github.com/ahaoboy/ssh-tauri/releases/latest/download/ssh-tauri_darwin_x64) |
+| 🍎 macOS (Apple Silicon) | [ssh-tauri_darwin_aarch64](https://github.com/ahaoboy/ssh-tauri/releases/latest/download/ssh-tauri_darwin_aarch64) |
+| 🍎 macOS (Intel, DMG) | [ssh-tauri_x64.dmg](https://github.com/ahaoboy/ssh-tauri/releases/latest/download/ssh-tauri_x64.dmg) |
+| 🍎 macOS (ARM, DMG) | [ssh-tauri_aarch64.dmg](https://github.com/ahaoboy/ssh-tauri/releases/latest/download/ssh-tauri_aarch64.dmg) |
+| 🐧 Linux (binary) | [ssh-tauri_linux_x64](https://github.com/ahaoboy/ssh-tauri/releases/latest/download/ssh-tauri_linux_x64) |
+| 🐧 Linux (deb) | [ssh-tauri_amd64.deb](https://github.com/ahaoboy/ssh-tauri/releases/latest/download/ssh-tauri_amd64.deb) |
+| 🐧 Linux (AppImage) | [ssh-tauri_amd64.AppImage](https://github.com/ahaoboy/ssh-tauri/releases/latest/download/ssh-tauri_amd64.AppImage) |
+| 🐧 Linux (rpm) | [ssh-tauri.x86_64.rpm](https://github.com/ahaoboy/ssh-tauri/releases/latest/download/ssh-tauri.x86_64.rpm) |
+| 🤖 Android (APK) | [app-universal-release.apk](https://github.com/ahaoboy/ssh-tauri/releases/latest/download/app-universal-release.apk) |
 
 ## Features
 

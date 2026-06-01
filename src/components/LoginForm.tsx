@@ -118,11 +118,19 @@ export default function LoginForm({
         {/* ── Header ─────────────────────────────────── */}
         <Box sx={{ textAlign: "center", mb: 3 }}>
           <Box
-            component="img"
-            src="/icon.png"
-            alt="SSH Client"
-            sx={{ width: 100, height: 100 }}
-          />
+            component="a"
+            href="https://github.com/ahaoboy/ssh-tauri"
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{ display: "inline-block", cursor: "pointer" }}
+          >
+            <Box
+              component="img"
+              src="/icon.png"
+              alt="SSH Client"
+              sx={{ width: 100, height: 100 }}
+            />
+          </Box>
           <Typography variant="h5" sx={{ fontWeight: 600 }} gutterBottom>
             SSH Client
           </Typography>
