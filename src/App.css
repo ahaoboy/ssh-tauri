@@ -3,6 +3,8 @@
 /* Remove default body margin (MUI CssBaseline handles this, but as a safety net) */
 body {
   margin: 0;
+  /* Prevent pinch-zoom and double-tap zoom */
+  touch-action: manipulation;
 }
 
 /* Disable tap highlight on mobile — prevents dark flash on touch */

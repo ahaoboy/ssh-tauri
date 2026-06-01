@@ -162,7 +162,15 @@ export default function TerminalView({
           p: 1,
           overflow: "hidden",
           "& .xterm": { height: "100%" },
-          "& .xterm-viewport::-webkit-scrollbar": { width: 8 },
+          "& .xterm-viewport": {
+            // Smooth scrolling on touch devices
+            WebkitOverflowScrolling: "touch",
+            overscrollBehavior: "none",
+            touchAction: "pan-y",
+            // Thin overlay scrollbar
+            scrollbarWidth: "thin",
+          },
+          "& .xterm-viewport::-webkit-scrollbar": { width: 6 },
           "& .xterm-viewport::-webkit-scrollbar-track": {
             background: "transparent",
           },
