@@ -8,12 +8,10 @@ import { normalizePrivateKey } from "./utils/keyNormalizer";
 import {
   loadAllConfigs,
   saveConfig,
-  deleteConfig,
   generateConfigId,
 } from "./utils/configStore";
 import LoginForm from "./components/LoginForm";
 import TerminalView from "./components/TerminalView";
-import ConfigDialog from "./components/ConfigDialog";
 
 // ── App component ──────────────────────────────────────────────────────────
 
@@ -37,7 +35,6 @@ export default function App() {
 
   // ── Config management state ──────────────────────────────────
   const [savedConfigs, setSavedConfigs] = useState<SavedConfig[]>([]);
-  const [configDialogOpen, setConfigDialogOpen] = useState(false);
 
   // Load saved configs on mount
   useEffect(() => {
@@ -109,15 +106,6 @@ export default function App() {
     saveConfig(config);
     reloadConfigs();
   }, [label, host, port, username, authMethod, password, privateKey, command, reloadConfigs]);
-
-  // ── Delete a saved config ────────────────────────────────────
-  const handleDeleteConfig = useCallback(
-    (id: string) => {
-      deleteConfig(id);
-      reloadConfigs();
-    },
-    [reloadConfigs],
-  );
 
   // ── Connect to SSH server ────────────────────────────────────
   const handleConnect = useCallback(async () => {
@@ -206,7 +194,6 @@ export default function App() {
       onAuthMethodChange: setAuthMethod,
       onConnect: handleConnect,
       onLoadConfig: handleLoadConfig,
-      onOpenManager: () => setConfigDialogOpen(true),
       onSaveConfig: handleSaveConfig,
     }),
     [
@@ -241,15 +228,6 @@ export default function App() {
       ) : (
         <LoginForm {...loginFormProps} />
       )}
-      <ConfigDialog
-        open={configDialogOpen}
-        configs={savedConfigs}
-        onClose={() => setConfigDialogOpen(false)}
-        onLoad={(cfg) => {
-          handleLoadConfig(cfg);
-        }}
-        onDelete={handleDeleteConfig}
-      />
     </>
   );
 }

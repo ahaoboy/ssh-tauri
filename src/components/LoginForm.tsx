@@ -23,7 +23,6 @@ import {
   Key,
   Password,
   Save,
-  FolderOpen,
 } from "@mui/icons-material";
 import type { AuthMethod, SavedConfig } from "../types";
 import { normalizePrivateKey } from "../utils/keyNormalizer";
@@ -56,8 +55,6 @@ interface LoginFormProps {
   onConnect: () => void;
   /** Called to load a saved config. */
   onLoadConfig: (config: SavedConfig) => void;
-  /** Called to open the config manager dialog. */
-  onOpenManager: () => void;
   /** Called to save current form as a new config. */
   onSaveConfig: () => void;
 }
@@ -80,7 +77,6 @@ export default function LoginForm({
   onAuthMethodChange,
   onConnect,
   onLoadConfig,
-  onOpenManager,
   onSaveConfig,
 }: LoginFormProps) {
   const theme = useTheme();
@@ -147,11 +143,6 @@ export default function LoginForm({
                 const cfg = savedConfigs.find((c) => c.id === e.target.value);
                 if (cfg) onLoadConfig(cfg);
               }}
-              startAdornment={
-                <InputAdornment position="start">
-                  <FolderOpen fontSize="small" />
-                </InputAdornment>
-              }
             >
               {savedConfigs.map((cfg) => (
                 <MenuItem key={cfg.id} value={cfg.id} dense>
@@ -306,13 +297,6 @@ export default function LoginForm({
               title="Save current form as a config"
             >
               Save
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={onOpenManager}
-              title="Manage saved configurations"
-            >
-              <FolderOpen />
             </Button>
           </Box>
         </Box>
