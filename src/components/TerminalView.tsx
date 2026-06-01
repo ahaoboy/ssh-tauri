@@ -33,6 +33,10 @@ import {
   KeyboardDoubleArrowDown,
 } from "@mui/icons-material";
 
+/** Detect Android via user-agent (inlined to avoid module resolution issues). */
+const isAndroid = (): boolean =>
+  typeof navigator !== "undefined" && /android/i.test(navigator.userAgent);
+
 // ── Terminal theme ──────────────────────────────────────────────────────
 
 const TERMINAL_THEME = {
@@ -93,6 +97,8 @@ export default function TerminalView({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [toolbarOpen, setToolbarOpen] = useState(false);
+  /** CSS rotation fallback when orientation API is unavailable. */
+  const [forcedRotation, setForcedRotation] = useState(0);
 
   const terminalRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
@@ -123,18 +129,26 @@ export default function TerminalView({
     }
   }, [sendKey]);
 
-  /** Toggle between portrait and landscape orientation. */
+  /** Toggle between portrait and landscape orientation.
+   *  Mobile: tries native screen.orientation.lock() (may need fullscreen),
+   *  falls back to CSS rotation. Desktop: CSS rotation only (no fullscreen). */
   const handleToggleOrientation = useCallback(async () => {
-    try {
-      const current = screen.orientation?.type ?? "";
-      if (current.startsWith("portrait")) {
-        await (screen.orientation as any).lock?.("landscape").catch(() => { });
-      } else {
-        await (screen.orientation as any).lock?.("portrait").catch(() => { });
+    if (isAndroid()) {
+      // ── Mobile: try native API ──────────────────────────
+      try {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+        }
+        const current = screen.orientation?.type ?? "";
+        const target = current.startsWith("portrait") ? "landscape" : "portrait";
+        await (screen.orientation as any).lock?.(target).catch(() => { });
+        return;
+      } catch {
+        // Native API unavailable — fall through to CSS fallback
       }
-    } catch {
-      // Orientation lock not supported
     }
+    // ── CSS rotation fallback (mobile + desktop) ──────────
+    setForcedRotation((prev) => (prev === 0 ? 90 : 0));
   }, []);
 
   // ── Initialize terminal instance (once) ──────────────────────────
@@ -211,6 +225,19 @@ export default function TerminalView({
         bgcolor: TERMINAL_THEME.background,
         pt: "var(--safe-area-top)",
         pb: "var(--safe-area-bottom)",
+        ...(forcedRotation
+          ? {
+            transform: `rotate(${forcedRotation}deg)`,
+            transformOrigin: "center center",
+            width: "100dvh",
+            height: "100dvw",
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            ml: "-50dvh",
+            mt: "-50dvw",
+          }
+          : {}),
       }}
     >
       {/* ── Header bar ─────────────────────────────── */}
