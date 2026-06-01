@@ -2,12 +2,9 @@
 
 import {
   AppBar,
-  Button,
   IconButton,
   Toolbar,
   Typography,
-  useMediaQuery,
-  useTheme,
 } from "@mui/material";
 import { useState, useCallback } from "react";
 import { Terminal as TerminalIcon, Logout, ScreenRotation, KeyboardDoubleArrowDown } from "@mui/icons-material";
@@ -20,10 +17,8 @@ interface TerminalHeaderProps {
   port: string;
   onDisconnect: () => void;
   onToggleOrientation: () => void;
-  /** Toolbar open state + toggle — shown only on Android. */
   toolbarOpen: boolean;
   onToggleToolbar: () => void;
-  showToolbarToggle: boolean;
 }
 
 // ── Component ────────────────────────────────────────────────────────────
@@ -36,10 +31,7 @@ export default function TerminalHeader({
   onToggleOrientation,
   toolbarOpen,
   onToggleToolbar,
-  showToolbarToggle,
 }: TerminalHeaderProps) {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [copied, setCopied] = useState(false);
 
   const connectionString = `${username}@${host}:${port}`;
@@ -89,38 +81,36 @@ export default function TerminalHeader({
         <IconButton
           size="small"
           color="inherit"
+          onClick={onToggleToolbar}
+          title="Toggle keyboard toolbar"
+        >
+          <KeyboardDoubleArrowDown
+            sx={{
+              fontSize: 18,
+              transform: toolbarOpen ? "rotate(180deg)" : "none",
+              transition: "transform 0.2s",
+            }}
+          />
+        </IconButton>
+
+        <IconButton
+          size="small"
+          color="inherit"
           onClick={onToggleOrientation}
           title="Toggle orientation"
         >
           <ScreenRotation sx={{ fontSize: 18 }} />
         </IconButton>
 
-        {showToolbarToggle && (
-          <IconButton
-            size="small"
-            color="inherit"
-            onClick={onToggleToolbar}
-            title="Toggle keyboard toolbar"
-          >
-            <KeyboardDoubleArrowDown
-              sx={{
-                fontSize: 18,
-                transform: toolbarOpen ? "rotate(180deg)" : "none",
-                transition: "transform 0.2s",
-              }}
-            />
-          </IconButton>
-        )}
 
-        <Button
+        <IconButton
           size="small"
           color="error"
-          variant="outlined"
-          startIcon={<Logout />}
           onClick={onDisconnect}
+          title="Disconnect"
         >
-          {isMobile ? "" : "Disconnect"}
-        </Button>
+          <Logout sx={{ fontSize: 18 }} />
+        </IconButton>
       </Toolbar>
     </AppBar>
   );

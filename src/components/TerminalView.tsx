@@ -11,10 +11,6 @@ import { TERMINAL_THEME } from "../constants/terminal";
 import TerminalHeader from "./TerminalHeader";
 import KeyToolbar from "./KeyToolbar";
 
-/** Detect Android via user-agent. */
-const isAndroid = (): boolean =>
-  typeof navigator !== "undefined" && /android/i.test(navigator.userAgent);
-
 // ── Props ────────────────────────────────────────────────────────────────
 
 interface TerminalViewProps {
@@ -50,18 +46,13 @@ export default function TerminalView({
 
   // ── Orientation toggle ────────────────────────────────────────────
   const handleToggleOrientation = useCallback(async () => {
-    if (isAndroid()) {
-      try {
-        if (!document.fullscreenElement) {
-          await document.documentElement.requestFullscreen();
-        }
-        const current = screen.orientation?.type ?? "";
-        const target = current.startsWith("portrait") ? "landscape" : "portrait";
-        await (screen.orientation as any).lock?.(target).catch(() => { });
-        return;
-      } catch {
-        // Fall through to CSS fallback
-      }
+    try {
+      const current = screen.orientation?.type ?? "";
+      const target = current.startsWith("portrait") ? "landscape" : "portrait";
+      await (screen.orientation as any).lock?.(target);
+      return;
+    } catch {
+      // Native API unavailable — CSS fallback
     }
     setForcedRotation((prev) => (prev === 0 ? 90 : 0));
   }, []);
@@ -160,10 +151,9 @@ export default function TerminalView({
         onToggleOrientation={handleToggleOrientation}
         toolbarOpen={toolbarOpen}
         onToggleToolbar={() => setToolbarOpen((v) => !v)}
-        showToolbarToggle={isAndroid()}
       />
 
-      {isAndroid() && <KeyToolbar onSendKey={sendKey} open={toolbarOpen} />}
+      <KeyToolbar onSendKey={sendKey} open={toolbarOpen} />
 
       <Box
         ref={terminalRef}
