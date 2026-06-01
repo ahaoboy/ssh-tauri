@@ -177,7 +177,6 @@ export default function LoginForm({
             placeholder="my-server"
             value={label}
             onChange={(e) => onChange("label", e.target.value)}
-            size="small"
           />
 
           {/* Host + Port */}
@@ -210,7 +209,7 @@ export default function LoginForm({
           />
 
           {/* Auth method */}
-          <FormControl size="small">
+          <FormControl>
             <InputLabel>Authentication</InputLabel>
             <Select
               value={authMethod}
@@ -275,10 +274,9 @@ export default function LoginForm({
 
           {/* Remote command (-t flag) */}
           <TextField
-            label="Remote Command (-t)"
+            label="Command"
             value={command}
             onChange={(e) => onChange("command", e.target.value)}
-            size="small"
           />
 
           {/* Error */}
