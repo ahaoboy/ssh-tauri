@@ -14,9 +14,17 @@
 
 ---
 
+## Screenshots
+
+<p align="center">
+  <img width="280" alt="Login form (Android)" src="https://github.com/user-attachments/assets/54c27e7d-8add-40b0-9d8b-9ba332a7d7b9" />
+  &nbsp;&nbsp;
+  <img width="480" alt="SSH terminal (Desktop)" src="https://github.com/user-attachments/assets/3fdbd0c9-ed96-4101-9d9a-b0d5dcc2b965" />
+</p>
+
 ## Download
 
-> Links point to the **latest release** assets.
+> Links point to the **[latest release](https://github.com/ahaoboy/ssh-tauri/releases/latest)** assets.
 
 | Platform | Download |
 |---|---|
