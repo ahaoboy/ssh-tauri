@@ -23,6 +23,7 @@ import {
   Key,
   Password,
   Save,
+  Delete,
 } from "@mui/icons-material";
 import type { AuthMethod, SavedConfig } from "../types";
 import { normalizePrivateKey } from "../utils/keyNormalizer";
@@ -57,6 +58,23 @@ interface LoginFormProps {
   onLoadConfig: (config: SavedConfig) => void;
   /** Called to save current form as a new config. */
   onSaveConfig: () => void;
+  /** Called to delete the currently selected config. */
+  onDeleteConfig: (id: string) => void;
+}
+
+/** Return a fresh default config object (no shared reference risk). */
+function getDefaultConfig(): SavedConfig {
+  return {
+    id: "",
+    label: "",
+    host: "",
+    port: "22",
+    username: "",
+    authMethod: "password",
+    password: "",
+    privateKey: "",
+    command: "",
+  };
 }
 
 // ── Component ────────────────────────────────────────────────────────────
@@ -78,17 +96,28 @@ export default function LoginForm({
   onConnect,
   onLoadConfig,
   onSaveConfig,
+  onDeleteConfig,
 }: LoginFormProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedConfigId, setSelectedConfigId] = useState("");
+
+  /** Track manual edits to clear the dropdown selection. */
+  const handleFieldChange = useCallback(
+    (field: string, value: string) => {
+      setSelectedConfigId("");
+      onChange(field, value);
+    },
+    [onChange],
+  );
 
   /** Normalize the private key when the user leaves the field. */
   const handlePrivateKeyBlur = useCallback(() => {
     if (privateKey.trim()) {
-      onChange("privateKey", normalizePrivateKey(privateKey));
+      handleFieldChange("privateKey", normalizePrivateKey(privateKey));
     }
-  }, [privateKey, onChange]);
+  }, [privateKey, handleFieldChange]);
 
   return (
     <Box
@@ -133,25 +162,43 @@ export default function LoginForm({
         </Box>
 
         {/* ── Saved configs quick-select ─────────────── */}
-        {savedConfigs.length > 0 && (
-          <FormControl size="small" fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Saved Configurations</InputLabel>
-            <Select
-              value=""
-              label="Saved Configurations"
-              onChange={(e) => {
-                const cfg = savedConfigs.find((c) => c.id === e.target.value);
-                if (cfg) onLoadConfig(cfg);
-              }}
-            >
-              {savedConfigs.map((cfg) => (
+        <FormControl size="small" fullWidth sx={{ mb: 2 }}>
+          <InputLabel>Saved Configurations</InputLabel>
+          <Select
+            value={selectedConfigId}
+            label="Saved Configurations"
+            onChange={(e) => {
+              const id = e.target.value;
+              if (id === "__new__") {
+                setSelectedConfigId("");
+                onLoadConfig(getDefaultConfig());
+                return;
+              }
+              const cfg = savedConfigs.find((c) => c.id === id);
+              if (cfg) {
+                setSelectedConfigId(cfg.id);
+                onLoadConfig(cfg);
+              }
+            }}
+          >
+            <MenuItem value="__new__" dense>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "primary.main" }}>
+                + New config
+              </Box>
+            </MenuItem>
+            {savedConfigs.length === 0 ? (
+              <MenuItem disabled dense>
+                <em>No saved configs</em>
+              </MenuItem>
+            ) : (
+              savedConfigs.map((cfg) => (
                 <MenuItem key={cfg.id} value={cfg.id} dense>
                   {cfg.label}
                 </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
+              ))
+            )}
+          </Select>
+        </FormControl>
 
         {/* ── Form ───────────────────────────────────── */}
         <Box
@@ -167,7 +214,7 @@ export default function LoginForm({
             label="Config Name"
             placeholder="my-server"
             value={label}
-            onChange={(e) => onChange("label", e.target.value)}
+            onChange={(e) => handleFieldChange("label", e.target.value)}
           />
 
           {/* Host + Port */}
@@ -176,7 +223,7 @@ export default function LoginForm({
               label="Host"
               placeholder="192.168.1.1"
               value={host}
-              onChange={(e) => onChange("host", e.target.value)}
+              onChange={(e) => handleFieldChange("host", e.target.value)}
               required
               sx={{ flex: 2 }}
             />
@@ -184,7 +231,7 @@ export default function LoginForm({
               label="Port"
               type="number"
               value={port}
-              onChange={(e) => onChange("port", e.target.value)}
+              onChange={(e) => handleFieldChange("port", e.target.value)}
               slotProps={{ htmlInput: { min: 1, max: 65535 } }}
               sx={{ flex: 1 }}
             />
@@ -195,7 +242,7 @@ export default function LoginForm({
             label="Username"
             placeholder="root"
             value={username}
-            onChange={(e) => onChange("username", e.target.value)}
+            onChange={(e) => handleFieldChange("username", e.target.value)}
             required
           />
 
@@ -205,9 +252,10 @@ export default function LoginForm({
             <Select
               value={authMethod}
               label="Authentication"
-              onChange={(e) =>
-                onAuthMethodChange(e.target.value as AuthMethod)
-              }
+              onChange={(e) => {
+                setSelectedConfigId("");
+                onAuthMethodChange(e.target.value as AuthMethod);
+              }}
             >
               <MenuItem value="password">
                 <Password sx={{ mr: 1, fontSize: 18 }} />
@@ -226,7 +274,7 @@ export default function LoginForm({
               label="Password"
               type={showPassword ? "text" : "password"}
               value={password}
-              onChange={(e) => onChange("password", e.target.value)}
+              onChange={(e) => handleFieldChange("password", e.target.value)}
               placeholder="••••••••"
               slotProps={{
                 input: {
@@ -252,7 +300,7 @@ export default function LoginForm({
               minRows={4}
               maxRows={8}
               value={privateKey}
-              onChange={(e) => onChange("privateKey", e.target.value)}
+              onChange={(e) => handleFieldChange("privateKey", e.target.value)}
               onBlur={handlePrivateKeyBlur}
               placeholder="-----BEGIN OPENSSH PRIVATE KEY-----\n..."
               slotProps={{
@@ -267,7 +315,7 @@ export default function LoginForm({
           <TextField
             label="Command"
             value={command}
-            onChange={(e) => onChange("command", e.target.value)}
+            onChange={(e) => handleFieldChange("command", e.target.value)}
           />
 
           {/* Error */}
@@ -290,14 +338,31 @@ export default function LoginForm({
               {connecting ? "Connecting…" : "Connect"}
             </Button>
             <Button
-              variant="outlined"
-              startIcon={<Save />}
+              variant="contained"
+              color="primary"
               onClick={onSaveConfig}
               disabled={!host || !username}
-              title="Save current form as a config"
+              title="Save current config"
+              sx={{ minWidth: 40, px: 1 }}
             >
-              Save
+              <Save fontSize="small" />
             </Button>
+            {selectedConfigId && (
+              <Button
+                variant="contained"
+                color="error"
+                onClick={() => {
+                  const id = selectedConfigId;
+                  setSelectedConfigId("");
+                  onDeleteConfig(id);
+                  onLoadConfig(getDefaultConfig());
+                }}
+                title="Delete selected config"
+                sx={{ minWidth: 40, px: 1 }}
+              >
+                <Delete fontSize="small" />
+              </Button>
+            )}
           </Box>
         </Box>
       </Paper>

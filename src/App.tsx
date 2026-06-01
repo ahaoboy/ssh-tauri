@@ -8,6 +8,7 @@ import { normalizePrivateKey } from "./utils/keyNormalizer";
 import {
   loadAllConfigs,
   saveConfig,
+  deleteConfig,
   generateConfigId,
 } from "./utils/configStore";
 import LoginForm from "./components/LoginForm";
@@ -107,6 +108,15 @@ export default function App() {
     reloadConfigs();
   }, [label, host, port, username, authMethod, password, privateKey, command, reloadConfigs]);
 
+  // ── Delete the currently selected config by id ───────────────
+  const handleDeleteConfig = useCallback(
+    (id: string) => {
+      deleteConfig(id);
+      reloadConfigs();
+    },
+    [reloadConfigs],
+  );
+
   // ── Connect to SSH server ────────────────────────────────────
   const handleConnect = useCallback(async () => {
     if (!host || !username) return;
@@ -195,6 +205,7 @@ export default function App() {
       onConnect: handleConnect,
       onLoadConfig: handleLoadConfig,
       onSaveConfig: handleSaveConfig,
+      onDeleteConfig: handleDeleteConfig,
     }),
     [
       label,
@@ -212,6 +223,7 @@ export default function App() {
       handleConnect,
       handleLoadConfig,
       handleSaveConfig,
+      handleDeleteConfig,
     ],
   );
 
