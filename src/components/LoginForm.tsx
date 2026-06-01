@@ -268,7 +268,6 @@ export default function LoginForm({
           {/* Remote command (-t flag) */}
           <TextField
             label="Remote Command (-t)"
-            placeholder="/jffs/fish"
             value={command}
             onChange={(e) => onChange("command", e.target.value)}
             size="small"
