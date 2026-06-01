@@ -9,6 +9,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
+import { useState, useCallback } from "react";
 import { Terminal as TerminalIcon, Logout, ScreenRotation, KeyboardDoubleArrowDown } from "@mui/icons-material";
 
 // ── Props ────────────────────────────────────────────────────────────────
@@ -39,6 +40,19 @@ export default function TerminalHeader({
 }: TerminalHeaderProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [copied, setCopied] = useState(false);
+
+  const connectionString = `${username}@${host}:${port}`;
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(connectionString);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard unavailable
+    }
+  }, [connectionString]);
 
   return (
     <AppBar
@@ -57,9 +71,19 @@ export default function TerminalHeader({
         <Typography
           variant="body2"
           color="text.secondary"
-          sx={{ flex: 1, fontFamily: "monospace", ml: 0.5 }}
+          noWrap
+          onClick={handleCopy}
+          title={`${connectionString} — click to copy`}
+          sx={{
+            flex: 1,
+            fontFamily: "monospace",
+            ml: 0.5,
+            cursor: "pointer",
+            userSelect: "none",
+            "&:hover": { color: "text.primary" },
+          }}
         >
-          {username}@{host}:{port}
+          {copied ? "Copied!" : connectionString}
         </Typography>
 
         <IconButton
