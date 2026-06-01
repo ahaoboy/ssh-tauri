@@ -3,11 +3,14 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { PhysicalSize } from "@tauri-apps/api/dpi";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
 import { Box, useMediaQuery, useTheme } from "@mui/material";
 import { TERMINAL_THEME } from "../constants/terminal";
+import { isAndroid } from "../utils/platform";
 import TerminalHeader from "./TerminalHeader";
 import KeyToolbar from "./KeyToolbar";
 
@@ -41,18 +44,35 @@ export default function TerminalView({
 
   // ── Send raw bytes to the SSH session ──────────────────────────────
   const sendKey = useCallback((key: string) => {
-    invoke("ssh_write", { data: key }).catch(() => { });
+    invoke("ssh_write", { data: key }).catch((e) => console.error("ssh_write error:", e));
   }, []);
 
   // ── Orientation toggle ────────────────────────────────────────────
   const handleToggleOrientation = useCallback(async () => {
+    console.log("Toggling orientation", isAndroid());
+    if (!isAndroid()) {
+      // ── Desktop (Tauri): swap window width/height ──────────
+      try {
+        const win = getCurrentWindow();
+        const size = await win.outerSize();
+        if (size.width > 0 && size.height > 0) {
+          await win.setSize(new PhysicalSize(size.height, size.width));
+          return;
+        }
+      } catch (e) {
+        console.error("Failed to toggle orientation via window resize:", e);
+        // Fall through
+      }
+    }
+
+    // ── Mobile / fallback: native orientation lock ───────────
     try {
       const current = screen.orientation?.type ?? "";
       const target = current.startsWith("portrait") ? "landscape" : "portrait";
       await (screen.orientation as any).lock?.(target);
       return;
     } catch {
-      // Native API unavailable — CSS fallback
+      console.warn("Orientation lock unavailable, using CSS fallback");
     }
     setForcedRotation((prev) => (prev === 0 ? 90 : 0));
   }, []);
@@ -76,7 +96,7 @@ export default function TerminalView({
     fitAddonRef.current = fitAddon;
 
     term.onData((data) => {
-      invoke("ssh_write", { data }).catch(() => { });
+      invoke("ssh_write", { data }).catch((e) => console.error("ssh_write error:", e));
     });
   }, [isMobile]);
 

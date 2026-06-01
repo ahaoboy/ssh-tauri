@@ -173,6 +173,7 @@ export default function App() {
       reloadConfigs();
       setSelectedConfigId(config.id);
     } catch (e) {
+      console.error("SSH connection failed:", e);
       setError(String(e));
       setConnectionState("error");
     }
@@ -182,8 +183,8 @@ export default function App() {
   const handleDisconnect = useCallback(async () => {
     try {
       await invoke("ssh_disconnect");
-    } catch {
-      // Ignore errors during disconnect
+    } catch (e) {
+      console.warn("SSH disconnect error:", e);
     }
     setConnectionState("disconnected");
   }, []);

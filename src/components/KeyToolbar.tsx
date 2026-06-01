@@ -51,8 +51,8 @@ export default function KeyToolbar({ onSendKey, open }: KeyToolbarProps) {
     try {
       const text = await navigator.clipboard.readText();
       if (text) onSendKey(text);
-    } catch {
-      // Clipboard API may not be available
+    } catch (e) {
+      console.warn("Clipboard read failed:", e);
     }
   };
 

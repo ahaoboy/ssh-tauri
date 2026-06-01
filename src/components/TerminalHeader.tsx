@@ -41,8 +41,8 @@ export default function TerminalHeader({
       await navigator.clipboard.writeText(connectionString);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // Clipboard unavailable
+    } catch (e) {
+      console.warn("Clipboard write failed:", e);
     }
   }, [connectionString]);
 

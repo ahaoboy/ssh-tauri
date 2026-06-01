@@ -18,6 +18,8 @@
     "clipboard-manager:allow-write-text",
     "os:default",
     "os:allow-hostname",
+    "core:window:allow-set-size",
+    "core:window:allow-outer-size",
     {
       "identifier": "fs:scope",
       "allow": [

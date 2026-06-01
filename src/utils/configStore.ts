@@ -10,7 +10,8 @@ function getIndex(): string[] {
   try {
     const raw = localStorage.getItem(INDEX_KEY);
     return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
+  } catch (e) {
+    console.warn("Failed to read config index:", e);
     return [];
   }
 }
@@ -29,8 +30,8 @@ export function loadAllConfigs(): SavedConfig[] {
     if (raw) {
       try {
         configs.push(JSON.parse(raw) as SavedConfig);
-      } catch {
-        // Skip corrupted entries
+      } catch (e) {
+        console.warn("Skipping corrupted config entry:", e);
       }
     }
   }
@@ -43,7 +44,8 @@ export function loadConfig(id: string): SavedConfig | null {
   if (!raw) return null;
   try {
     return JSON.parse(raw) as SavedConfig;
-  } catch {
+  } catch (e) {
+    console.warn("Failed to load config:", e);
     return null;
   }
 }

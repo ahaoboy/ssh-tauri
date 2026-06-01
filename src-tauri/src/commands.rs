@@ -81,7 +81,9 @@ pub(crate) async fn ssh_connect(
         }
         .await;
 
-        let _ = std::fs::remove_file(&key_path);
+        let _ = std::fs::remove_file(&key_path).inspect_err(|e| {
+            warn!("Failed to remove temp key file: {e}");
+        });
         result?
     } else if let Some(ref password) = params.password {
         debug!("Authenticating with password…");
@@ -140,7 +142,9 @@ pub(crate) async fn ssh_connect(
         ssh.reader_task = Some(reader_task);
     }
 
-    let _ = app.emit("ssh-connected", ());
+    if let Err(e) = app.emit("ssh-connected", ()) {
+        warn!("Failed to emit ssh-connected event: {e}");
+    }
     info!("SSH session ready");
     Ok(())
 }
@@ -191,7 +195,9 @@ pub(crate) async fn ssh_disconnect(
     if let Some(task) = ssh.reader_task.take() {
         task.abort();
     }
-    let _ = app.emit("ssh-closed", ());
+    if let Err(e) = app.emit("ssh-closed", ()) {
+        warn!("Failed to emit ssh-closed event: {e}");
+    }
     debug!("SSH session fully disconnected");
     Ok(())
 }

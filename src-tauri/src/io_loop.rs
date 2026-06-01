@@ -3,7 +3,7 @@
 use russh::client;
 use russh::Channel;
 use tauri::Emitter;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 
 use crate::state::ControlMsg;
 
@@ -26,20 +26,30 @@ pub(crate) async fn ssh_io_loop(
                 match result {
                     Ok(0) => {
                         info!("SSH channel closed (EOF)");
-                        let _ = app.emit("ssh-data",
-                            "\r\n\x1b[33mConnection closed by remote host.\x1b[0m\r\n");
-                        let _ = app.emit("ssh-closed", ());
+                        if let Err(e) = app.emit("ssh-data",
+                            "\r\n\x1b[33mConnection closed by remote host.\x1b[0m\r\n") {
+                            warn!("Failed to emit ssh-data event: {e}");
+                        }
+                        if let Err(e) = app.emit("ssh-closed", ()) {
+                            warn!("Failed to emit ssh-closed event: {e}");
+                        }
                         break;
                     }
                     Ok(n) => {
                         let text = String::from_utf8_lossy(&read_buf[..n]).to_string();
-                        let _ = app.emit("ssh-data", text);
+                        if let Err(e) = app.emit("ssh-data", text) {
+                            warn!("Failed to emit ssh-data event: {e}");
+                        }
                     }
                     Err(e) => {
                         error!(%e, "Read error in SSH I/O loop");
-                        let _ = app.emit("ssh-data",
-                            format!("\r\n\x1b[31mRead error: {}\x1b[0m\r\n", e));
-                        let _ = app.emit("ssh-closed", ());
+                        if let Err(e2) = app.emit("ssh-data",
+                            format!("\r\n\x1b[31mRead error: {}\x1b[0m\r\n", e)) {
+                            warn!("Failed to emit ssh-data event: {e2}");
+                        }
+                        if let Err(e3) = app.emit("ssh-closed", ()) {
+                            warn!("Failed to emit ssh-closed event: {e3}");
+                        }
                         break;
                     }
                 }
@@ -52,8 +62,10 @@ pub(crate) async fn ssh_io_loop(
                         use tokio::io::AsyncWriteExt;
                         if let Err(e) = stream.write_all(&data).await {
                             error!(%e, "Write error in SSH I/O loop");
-                            let _ = app.emit("ssh-data",
-                                format!("\r\n\x1b[31mWrite error: {}\x1b[0m\r\n", e));
+                            if let Err(e2) = app.emit("ssh-data",
+                                format!("\r\n\x1b[31mWrite error: {}\x1b[0m\r\n", e)) {
+                                warn!("Failed to emit ssh-data event: {e2}");
+                            }
                             break;
                         }
                     }

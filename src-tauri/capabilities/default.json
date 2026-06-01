@@ -11,6 +11,8 @@
     "opener:allow-open-path",
     "opener:allow-reveal-item-in-dir",
     "core:default",
+    "core:window:allow-set-size",
+    "core:window:allow-outer-size",
     "fs:read-all",
     "fs:write-all",
     "clipboard-manager:default",
