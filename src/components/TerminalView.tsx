@@ -11,6 +11,7 @@ import "@xterm/xterm/css/xterm.css";
 import { Box } from "@mui/material";
 import { TERMINAL_THEME } from "../constants/terminal";
 import { isMobile } from "../utils/platform";
+import { useAutoOrientation } from "../hooks/useAutoOrientation";
 import TerminalHeader from "./TerminalHeader";
 import KeyToolbar from "./KeyToolbar";
 import { useTwoFingerScroll } from "../hooks/useTwoFingerScroll";
@@ -43,6 +44,9 @@ export default function TerminalView({
 
   // ── Mobile two-finger scroll hook ──────────────────────────────────
   const { gestureProps, touchAction, isMobile: isMobileDevice } = useTwoFingerScroll(terminalRef);
+
+  // ── Force landscape on desktop ───────────────────────────────────
+  useAutoOrientation("landscape");
 
   // ── Send raw bytes to the SSH session ──────────────────────────────
   const sendKey = useCallback((key: string) => {
