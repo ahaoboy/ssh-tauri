@@ -8,11 +8,12 @@ import { PhysicalSize } from "@tauri-apps/api/dpi";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
-import { Box, useMediaQuery, useTheme } from "@mui/material";
+import { Box } from "@mui/material";
 import { TERMINAL_THEME } from "../constants/terminal";
-import { isAndroid } from "../utils/platform";
+import { isMobile } from "../utils/platform";
 import TerminalHeader from "./TerminalHeader";
 import KeyToolbar from "./KeyToolbar";
+import { useTwoFingerScroll } from "../hooks/useTwoFingerScroll";
 
 // ── Props ────────────────────────────────────────────────────────────────
 
@@ -31,8 +32,6 @@ export default function TerminalView({
   port,
   onDisconnect,
 }: TerminalViewProps) {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [forcedRotation, setForcedRotation] = useState(0);
   /** Toolbar open state lives here so it survives orientation changes. */
   const [toolbarOpen, setToolbarOpen] = useState(false);
@@ -42,6 +41,9 @@ export default function TerminalView({
   const fitAddonRef = useRef<FitAddon | null>(null);
   const eventUnlistenRef = useRef<(() => Promise<void>) | null>(null);
 
+  // ── Mobile two-finger scroll hook ──────────────────────────────────
+  const { gestureProps, touchAction, isMobile: isMobileDevice } = useTwoFingerScroll(terminalRef);
+
   // ── Send raw bytes to the SSH session ──────────────────────────────
   const sendKey = useCallback((key: string) => {
     invoke("ssh_write", { data: key }).catch((e) => console.error("ssh_write error:", e));
@@ -49,8 +51,8 @@ export default function TerminalView({
 
   // ── Orientation toggle ────────────────────────────────────────────
   const handleToggleOrientation = useCallback(async () => {
-    console.log("Toggling orientation", isAndroid());
-    if (!isAndroid()) {
+    console.log("Toggling orientation", isMobile());
+    if (!isMobile()) {
       // ── Desktop (Tauri): swap window width/height ──────────
       try {
         const win = getCurrentWindow();
@@ -83,7 +85,7 @@ export default function TerminalView({
 
     const term = new Terminal({
       cursorBlink: true,
-      fontSize: isMobile ? 12 : 14,
+      fontSize: isMobile() ? 12 : 14,
       fontFamily: "'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace",
       theme: TERMINAL_THEME,
       allowProposedApi: true,
@@ -111,6 +113,7 @@ export default function TerminalView({
 
     term.open(terminalRef.current);
     fitAddon.fit();
+    term.focus(); // Automatically focus the terminal when connection completes
 
     const unlistenData = listen<string>("ssh-data", (event) => {
       term.write(event.payload);
@@ -122,11 +125,18 @@ export default function TerminalView({
       (await unlistenClosed)();
     };
 
+    // Synchronize frontend terminal resizing with the backend remote PTY
+    const onResizeUnsubscribe = term.onResize(({ cols, rows }) => {
+      invoke("ssh_resize", { cols, rows, _width_px: 0, _height_px: 0 })
+        .catch((e) => console.error("ssh_resize error:", e));
+    });
+
     const observer = new ResizeObserver(() => fitAddon.fit());
     observer.observe(terminalRef.current);
 
     return () => {
       observer.disconnect();
+      onResizeUnsubscribe.dispose();
       if (eventUnlistenRef.current) {
         eventUnlistenRef.current();
         eventUnlistenRef.current = null;
@@ -177,20 +187,25 @@ export default function TerminalView({
 
       <Box
         ref={terminalRef}
+        {...gestureProps}
         sx={{
           flex: 1,
           p: 1,
           overflow: "hidden",
+          // Prevent browser touch gestures (scroll/bounce) on mobile only
+          touchAction,
+          cursor: "default",
           "& .xterm": { height: "100%" },
           "& .xterm-viewport": {
             // Smooth scrolling on touch devices
             WebkitOverflowScrolling: "touch",
             overscrollBehavior: "none",
-            touchAction: "pan-y",
             // Thin overlay scrollbar
             scrollbarWidth: "thin",
           },
-          "& .xterm-viewport::-webkit-scrollbar": { width: 6 },
+          "& .xterm-viewport::-webkit-scrollbar": {
+            width: isMobileDevice ? 8 : 6,
+          },
           "& .xterm-viewport::-webkit-scrollbar-track": {
             background: "transparent",
           },
