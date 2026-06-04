@@ -10,6 +10,8 @@ import {
   saveConfig,
   deleteConfig,
   generateConfigId,
+  getLastUsedConfigId,
+  setLastUsedConfigId,
 } from "./utils/configStore";
 import LoginForm from "./components/LoginForm";
 import TerminalView from "./components/TerminalView";
@@ -39,9 +41,19 @@ export default function App() {
   /** Currently selected config ID (synced across connect/disconnect). */
   const [selectedConfigId, setSelectedConfigId] = useState("");
 
-  // Load saved configs on mount
+  // Load saved configs on mount, and auto-select the last used one
   useEffect(() => {
-    setSavedConfigs(loadAllConfigs());
+    const configs = loadAllConfigs();
+    setSavedConfigs(configs);
+
+    const lastId = getLastUsedConfigId();
+    if (lastId) {
+      const lastCfg = configs.find((c) => c.id === lastId);
+      if (lastCfg) {
+        handleLoadConfig(lastCfg);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── Reload configs helper ────────────────────────────────────
@@ -170,6 +182,7 @@ export default function App() {
         command,
       };
       saveConfig(config);
+      setLastUsedConfigId(config.id);
       reloadConfigs();
       setSelectedConfigId(config.id);
     } catch (e) {

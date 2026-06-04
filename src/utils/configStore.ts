@@ -4,6 +4,7 @@ import type { SavedConfig } from "../types";
 
 const STORAGE_KEY = "ssh:configs";
 const INDEX_KEY = "ssh:config-index";
+const LAST_USED_KEY = "ssh:last-used";
 
 /** Read all stored config IDs in order. */
 function getIndex(): string[] {
@@ -65,6 +66,23 @@ export function deleteConfig(id: string): void {
   const ids = getIndex().filter((i) => i !== id);
   saveIndex(ids);
   localStorage.removeItem(`${STORAGE_KEY}:${id}`);
+}
+
+/** Remember the last successfully connected config ID. */
+export function setLastUsedConfigId(id: string): void {
+  localStorage.setItem(LAST_USED_KEY, id);
+}
+
+/** Retrieve the last successfully connected config ID, if any. */
+export function getLastUsedConfigId(): string | null {
+  const raw = localStorage.getItem(LAST_USED_KEY);
+  if (!raw) return null;
+  // Validate that the config still exists
+  if (!localStorage.getItem(`${STORAGE_KEY}:${raw}`)) {
+    localStorage.removeItem(LAST_USED_KEY);
+    return null;
+  }
+  return raw;
 }
 
 /** Generate a unique id for a new config based on timestamp. */
