@@ -102,16 +102,17 @@ export default function App() {
       setPrivateKey(config.privateKey);
       setCommand(config.command ?? "");
       setLabelEdited(true);
-      setSelectedConfigId(config.id || "");
+      setSelectedConfigId(config.id);
     },
     [],
   );
 
-  // ── Save current form values as a new config ─────────────────
+  // ── Save current form values (create or update by id) ────────
   const handleSaveConfig = useCallback(() => {
     if (!host || !username) return;
+    const id = selectedConfigId || generateConfigId();
     const config: SavedConfig = {
-      id: generateConfigId(),
+      id,
       label: label || `${username}@${host}`,
       host,
       port,
@@ -122,8 +123,10 @@ export default function App() {
       command,
     };
     saveConfig(config);
+    setSelectedConfigId(id);
+    setLabelEdited(true);
     reloadConfigs();
-  }, [label, host, port, username, authMethod, password, privateKey, command, reloadConfigs]);
+  }, [selectedConfigId, label, host, port, username, authMethod, password, privateKey, command, reloadConfigs]);
 
   // ── Delete the currently selected config by id ───────────────
   const handleDeleteConfig = useCallback(
@@ -165,14 +168,14 @@ export default function App() {
       setConnectionState("connected");
 
       // Auto-save config on successful connection.
-      // If a config with the same host+username already exists, update it;
-      // otherwise create a new one.
+      // Use selected config id if available, else match by host+username.
       const existing = savedConfigs.find(
+        (c) => c.id === selectedConfigId,
+      ) ?? savedConfigs.find(
         (c) => c.host === host && c.username === username,
       );
       const config: SavedConfig = {
         id: existing?.id ?? generateConfigId(),
-        // Use the user's custom label, or the existing label, or the default
         label: label || existing?.label || `${username}@${host}`,
         host,
         port,

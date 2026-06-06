@@ -27,6 +27,7 @@ import {
 } from "@mui/icons-material";
 import type { AuthMethod, SavedConfig } from "../types";
 import { normalizePrivateKey } from "../utils/keyNormalizer";
+import { generateConfigId } from "../utils/configStore";
 
 // ── Props ────────────────────────────────────────────────────────────────
 
@@ -66,10 +67,10 @@ interface LoginFormProps {
   onSelectConfig: (id: string) => void;
 }
 
-/** Return a fresh default config object (no shared reference risk). */
+/** Return a fresh default config object with a unique id. */
 function getDefaultConfig(): SavedConfig {
   return {
-    id: "",
+    id: generateConfigId(),
     label: "",
     host: "",
     port: "22",
@@ -198,7 +199,7 @@ export default function LoginForm({
             ) : (
               savedConfigs.map((cfg) => (
                 <MenuItem key={cfg.id} value={cfg.id} dense>
-                  {cfg.label}
+                  {cfg.label || `${cfg.username}@${cfg.host}:${cfg.port}`}
                 </MenuItem>
               ))
             )}
