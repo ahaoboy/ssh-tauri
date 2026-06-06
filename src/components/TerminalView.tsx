@@ -11,6 +11,7 @@ import "@xterm/xterm/css/xterm.css";
 import { Box } from "@mui/material";
 import { TERMINAL_THEME } from "../constants/terminal";
 import { isMobile } from "../utils/platform";
+import { useTerminalTheme } from "../hooks/useTerminalTheme";
 import TerminalHeader from "./TerminalHeader";
 import KeyToolbar from "./KeyToolbar";
 import { useTwoFingerScroll } from "../hooks/useTwoFingerScroll";
@@ -43,6 +44,9 @@ export default function TerminalView({
 
   // ── Mobile two-finger scroll hook ──────────────────────────────────
   const { gestureProps, touchAction, isMobile: isMobileDevice } = useTwoFingerScroll(terminalRef);
+
+  // ── Theme-aware colors ──────────────────────────────────────────
+  const { xterm: xtermTheme, chrome, pageBg } = useTerminalTheme();
 
   // ── Send raw bytes to the SSH session ──────────────────────────────
   const sendKey = useCallback((key: string) => {
@@ -87,7 +91,7 @@ export default function TerminalView({
       cursorBlink: true,
       fontSize: isMobile() ? 12 : 14,
       fontFamily: "'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace",
-      theme: TERMINAL_THEME,
+      theme: xtermTheme,
       allowProposedApi: true,
     });
 
@@ -112,7 +116,7 @@ export default function TerminalView({
       }
       return true;
     });
-  }, [isMobile]);
+  }, [isMobile, xtermTheme]);
 
   // ── Mount terminal and subscribe to events ──────────────────────
   useEffect(() => {
@@ -175,7 +179,7 @@ export default function TerminalView({
         display: "flex",
         flexDirection: "column",
         height: "100dvh",
-        bgcolor: TERMINAL_THEME.background,
+        bgcolor: pageBg,
         pt: "var(--safe-area-top)",
         pb: "var(--safe-area-bottom)",
         ...(forcedRotation

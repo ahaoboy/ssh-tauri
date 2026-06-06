@@ -14,6 +14,7 @@ import {
   ContentPaste,
 } from "@mui/icons-material";
 import { KEY_SEQUENCES } from "../constants/terminal";
+import { useTerminalTheme } from "../hooks/useTerminalTheme";
 
 // ── Key definitions (single source of truth) ─────────────────────────────
 
@@ -57,6 +58,7 @@ interface KeyToolbarProps {
 export default function KeyToolbar({ onSendKey, open }: KeyToolbarProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [narrow, setNarrow] = useState(false);
+  const { chrome } = useTerminalTheme();
 
   // ── Dynamically decide 1-row vs 2-row layout ───────────────────
   // Total minimum width ≈ 9 buttons × 44px + 8 gaps × 6px + 2×12px padding
@@ -111,7 +113,7 @@ export default function KeyToolbar({ onSendKey, open }: KeyToolbarProps) {
       sx={{
         borderBottom: 1,
         borderColor: "divider",
-        bgcolor: "rgba(22, 27, 34, 0.95)",
+        bgcolor: chrome.bg,
         backdropFilter: "blur(8px)",
       }}
     >
@@ -148,6 +150,7 @@ interface KeyBtnProps {
 }
 
 function KeyBtn({ icon, onClick, label, sx }: KeyBtnProps) {
+  const { chrome } = useTerminalTheme();
   return (
     <Button
       variant="outlined"
@@ -160,7 +163,7 @@ function KeyBtn({ icon, onClick, label, sx }: KeyBtnProps) {
         px: 1,
         fontSize: 11,
         fontWeight: 600,
-        borderColor: "rgba(255,255,255,0.12)",
+        borderColor: chrome.border,
         color: "text.secondary",
         textTransform: "none",
         ...sx,

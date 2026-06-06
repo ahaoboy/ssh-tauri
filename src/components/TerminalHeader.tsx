@@ -8,6 +8,7 @@ import {
 } from "@mui/material";
 import { useState, useCallback } from "react";
 import { Terminal as TerminalIcon, Logout, ScreenRotation, KeyboardDoubleArrowDown } from "@mui/icons-material";
+import { useTerminalTheme } from "../hooks/useTerminalTheme";
 
 // ── Props ────────────────────────────────────────────────────────────────
 
@@ -33,6 +34,7 @@ export default function TerminalHeader({
   onToggleToolbar,
 }: TerminalHeaderProps) {
   const [copied, setCopied] = useState(false);
+  const { chrome } = useTerminalTheme();
 
   const connectionString = `${username}@${host}:${port}`;
 
@@ -54,7 +56,7 @@ export default function TerminalHeader({
       sx={{
         borderBottom: 1,
         borderColor: "divider",
-        bgcolor: "rgba(22, 27, 34, 0.95)",
+        bgcolor: chrome.bg,
         backdropFilter: "blur(8px)",
       }}
     >
