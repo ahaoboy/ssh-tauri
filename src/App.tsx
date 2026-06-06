@@ -3,6 +3,8 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { CssBaseline } from "@mui/material";
+import { useAutoOrientation } from "./hooks/useAutoOrientation";
+import { isMobile } from "./utils/platform";
 import type { AuthMethod, ConnectionState, ConnectParams, SavedConfig } from "./types";
 import { normalizePrivateKey } from "./utils/keyNormalizer";
 import {
@@ -204,6 +206,13 @@ export default function App() {
 
   // ── Determine whether to render login or terminal ────────────
   const isConnected = connectionState === "connected";
+
+  // ── Window orientation ──────────────────────────────────────
+  // Login always portrait; terminal follows screen aspect ratio
+  const orientation = isConnected && !isMobile() && screen.width > screen.height
+    ? "landscape"
+    : "portrait";
+  useAutoOrientation(orientation);
 
   const loginFormProps = useMemo(
     () => ({

@@ -11,7 +11,6 @@ import "@xterm/xterm/css/xterm.css";
 import { Box } from "@mui/material";
 import { TERMINAL_THEME } from "../constants/terminal";
 import { isMobile } from "../utils/platform";
-import { useAutoOrientation } from "../hooks/useAutoOrientation";
 import TerminalHeader from "./TerminalHeader";
 import KeyToolbar from "./KeyToolbar";
 import { useTwoFingerScroll } from "../hooks/useTwoFingerScroll";
@@ -45,9 +44,6 @@ export default function TerminalView({
   // ── Mobile two-finger scroll hook ──────────────────────────────────
   const { gestureProps, touchAction, isMobile: isMobileDevice } = useTwoFingerScroll(terminalRef);
 
-  // ── Force landscape on desktop ───────────────────────────────────
-  useAutoOrientation("landscape");
-
   // ── Send raw bytes to the SSH session ──────────────────────────────
   const sendKey = useCallback((key: string) => {
     invoke("ssh_write", { data: key }).catch((e) => console.error("ssh_write error:", e));
@@ -60,7 +56,7 @@ export default function TerminalView({
       // ── Desktop (Tauri): swap window width/height ──────────
       try {
         const win = getCurrentWindow();
-        const size = await win.outerSize();
+        const size = await win.innerSize();
         if (size.width > 0 && size.height > 0) {
           await win.setSize(new PhysicalSize(size.height, size.width));
           return;
@@ -104,6 +100,18 @@ export default function TerminalView({
     term.onData((data) => {
       invoke("ssh_write", { data }).catch((e) => console.error("ssh_write error:", e));
     });
+
+    // Handle Ctrl+V / Cmd+V via keydown (reliable in Tauri webview)
+    term.attachCustomKeyEventHandler((e) => {
+      if (e.type === "keydown" && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v") {
+        e.preventDefault();
+        navigator.clipboard.readText().then((text) => {
+          if (text) invoke("ssh_write", { data: text });
+        }).catch(() => { });
+        return false;
+      }
+      return true;
+    });
   }, [isMobile]);
 
   // ── Mount terminal and subscribe to events ──────────────────────
@@ -119,6 +127,13 @@ export default function TerminalView({
     fitAddon.fit();
     term.focus(); // Automatically focus the terminal when connection completes
 
+    // Block browser paste event from reaching xterm (keydown handler does the actual paste)
+    const onPaste = (e: ClipboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    terminalRef.current.addEventListener("paste", onPaste, true);
+
     const unlistenData = listen<string>("ssh-data", (event) => {
       term.write(event.payload);
     });
@@ -131,7 +146,7 @@ export default function TerminalView({
 
     // Synchronize frontend terminal resizing with the backend remote PTY
     const onResizeUnsubscribe = term.onResize(({ cols, rows }) => {
-      invoke("ssh_resize", { cols, rows, _width_px: 0, _height_px: 0 })
+      invoke("ssh_resize", { cols, rows, widthPx: 0, heightPx: 0 })
         .catch((e) => console.error("ssh_resize error:", e));
     });
 
@@ -139,6 +154,7 @@ export default function TerminalView({
     observer.observe(terminalRef.current);
 
     return () => {
+      terminalRef.current?.removeEventListener("paste", onPaste, true);
       observer.disconnect();
       onResizeUnsubscribe.dispose();
       if (eventUnlistenRef.current) {

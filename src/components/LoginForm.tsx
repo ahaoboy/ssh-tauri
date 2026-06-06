@@ -17,7 +17,6 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { useAutoOrientation } from "../hooks/useAutoOrientation";
 import {
   Visibility,
   VisibilityOff,
@@ -108,9 +107,6 @@ export default function LoginForm({
   const theme = useTheme();
   const isNarrow = useMediaQuery(theme.breakpoints.down("sm"));
   const [showPassword, setShowPassword] = useState(false);
-
-  // ── Force portrait on desktop ────────────────────────────────────
-  useAutoOrientation("portrait");
 
   /** Track manual edits to clear the dropdown selection. */
   const handleFieldChange = useCallback(
