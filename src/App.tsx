@@ -53,6 +53,7 @@ export default function App() {
       const lastCfg = configs.find((c) => c.id === lastId);
       if (lastCfg) {
         handleLoadConfig(lastCfg);
+        setSelectedConfigId(lastCfg.id);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -102,7 +103,6 @@ export default function App() {
       setPrivateKey(config.privateKey);
       setCommand(config.command ?? "");
       setLabelEdited(true);
-      setSelectedConfigId(config.id);
     },
     [],
   );
