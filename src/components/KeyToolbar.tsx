@@ -1,7 +1,7 @@
 // ── Collapsible virtual keyboard toolbar ────────────────────────────────
 
-import { Box, Button, Stack } from "@mui/material";
-import { useRef, useState, useEffect } from "react";
+import { Box, Button, Stack, SxProps, Theme } from "@mui/material";
+import { useRef, useState, useEffect, useCallback } from "react";
 import {
   KeyboardArrowUp,
   KeyboardArrowDown,
@@ -14,6 +14,36 @@ import {
   ContentPaste,
 } from "@mui/icons-material";
 import { KEY_SEQUENCES } from "../constants/terminal";
+
+// ── Key definitions (single source of truth) ─────────────────────────────
+
+interface KeyDef {
+  id: string;
+  icon: React.ReactNode;
+  label?: string;
+  narrowSx?: SxProps<Theme>;
+  /** `true` for paste (clipboard), otherwise sends KEY_SEQUENCES[id]. */
+  isPaste?: boolean;
+}
+
+/** Key order for the wide (1-row wrap) layout. */
+const WIDE_KEYS: KeyDef[] = [
+  { id: "arrowUp", icon: <KeyboardArrowUp /> },
+  { id: "arrowDown", icon: <KeyboardArrowDown /> },
+  { id: "arrowLeft", icon: <KeyboardArrowLeft /> },
+  { id: "arrowRight", icon: <KeyboardArrowRight /> },
+  { id: "tab", icon: <Tab />, label: "Tab" },
+  { id: "delete", icon: <BackspaceOutlined />, label: "Del" },
+  { id: "enter", icon: <KeyboardReturn />, label: "Enter", narrowSx: { flex: 1, maxWidth: 120 } },
+  { id: "ctrlC", icon: <ContentCopy />, label: "C" },
+  { id: "paste", icon: <ContentPaste />, label: "V", isPaste: true },
+];
+
+/** Key order for the narrow (2-row) layout. */
+const NARROW_ROWS: KeyDef[][] = [
+  WIDE_KEYS.slice(0, 6),
+  WIDE_KEYS.slice(6),
+];
 
 // ── Props ────────────────────────────────────────────────────────────────
 
@@ -40,21 +70,40 @@ export default function KeyToolbar({ onSendKey, open }: KeyToolbarProps) {
     return () => observer.disconnect();
   }, []);
 
-  /** Send a named virtual key sequence. */
-  const handlePress = (id: string) => {
-    const seq = KEY_SEQUENCES[id];
-    if (seq) onSendKey(seq);
-  };
+  // ── Handlers ────────────────────────────────────────────────────
+  const handlePress = useCallback(
+    (id: string) => {
+      const seq = KEY_SEQUENCES[id];
+      if (seq) onSendKey(seq);
+    },
+    [onSendKey],
+  );
 
-  /** Paste clipboard content. */
-  const handlePaste = async () => {
+  const handlePaste = useCallback(async () => {
     try {
       const text = await navigator.clipboard.readText();
       if (text) onSendKey(text);
     } catch (e) {
       console.warn("Clipboard read failed:", e);
     }
-  };
+  }, [onSendKey]);
+
+  /** Resolve onClick for a key def. */
+  const getClick = useCallback(
+    (k: KeyDef) => (k.isPaste ? handlePaste : () => handlePress(k.id)),
+    [handlePaste, handlePress],
+  );
+
+  // ── Render ──────────────────────────────────────────────────────
+  const renderKey = (k: KeyDef) => (
+    <KeyBtn
+      key={k.id}
+      icon={k.icon}
+      onClick={getClick(k)}
+      label={k.label}
+      sx={narrow ? k.narrowSx : undefined}
+    />
+  );
 
   return (
     <Box
@@ -66,37 +115,25 @@ export default function KeyToolbar({ onSendKey, open }: KeyToolbarProps) {
         backdropFilter: "blur(8px)",
       }}
     >
-      {open && (
-        narrow ? (
-          <Stack spacing={1} sx={{ px: 1.5, pb: 1.5 }}>
-            <Stack direction="row" spacing={0.8} sx={{ justifyContent: "center" }}>
-              <KeyBtn icon={<KeyboardArrowLeft />} onClick={() => handlePress("arrowLeft")} />
-              <KeyBtn icon={<KeyboardArrowUp />} onClick={() => handlePress("arrowUp")} />
-              <KeyBtn icon={<KeyboardArrowDown />} onClick={() => handlePress("arrowDown")} />
-              <KeyBtn icon={<KeyboardArrowRight />} onClick={() => handlePress("arrowRight")} />
-              <KeyBtn icon={<Tab />} onClick={() => handlePress("tab")} label="Tab" />
-              <KeyBtn icon={<BackspaceOutlined />} onClick={() => handlePress("delete")} label="Del" />
+      {open &&
+        (narrow
+          ? // ── Narrow: 2-row layout ──────────────────────────────
+          NARROW_ROWS.map((row, i) => (
+            <Stack
+              key={i}
+              direction="row"
+              spacing={0.8}
+              sx={{ justifyContent: "center", px: 1.5, pb: i === 0 ? 0.5 : 1.5, pt: i === 0 ? 1.5 : 0 }}
+            >
+              {row.map((k) => renderKey(k))}
             </Stack>
-            <Stack direction="row" spacing={0.8} sx={{ justifyContent: "center" }}>
-              <KeyBtn icon={<KeyboardReturn />} onClick={() => handlePress("enter")} label="Enter" sx={{ flex: 1, maxWidth: 120 }} />
-              <KeyBtn icon={<ContentCopy />} onClick={() => handlePress("ctrlC")} label="C" color="warning" />
-              <KeyBtn icon={<ContentPaste />} onClick={handlePaste} label="V" color="info" />
+          ))
+          : // ── Wide: single wrapping row ──────────────────────────
+          (
+            <Stack direction="row" spacing={0.8} sx={{ px: 1.5, pb: 1.5, pt: 1.5, justifyContent: "center", flexWrap: "wrap" }}>
+              {WIDE_KEYS.map((k) => renderKey(k))}
             </Stack>
-          </Stack>
-        ) : (
-          <Stack direction="row" spacing={0.8} sx={{ px: 1.5, pb: 1.5, justifyContent: "center", flexWrap: "wrap" }}>
-            <KeyBtn icon={<KeyboardArrowLeft />} onClick={() => handlePress("arrowLeft")} />
-            <KeyBtn icon={<KeyboardArrowUp />} onClick={() => handlePress("arrowUp")} />
-            <KeyBtn icon={<KeyboardArrowDown />} onClick={() => handlePress("arrowDown")} />
-            <KeyBtn icon={<KeyboardArrowRight />} onClick={() => handlePress("arrowRight")} />
-            <KeyBtn icon={<Tab />} onClick={() => handlePress("tab")} label="Tab" />
-            <KeyBtn icon={<BackspaceOutlined />} onClick={() => handlePress("delete")} label="Del" />
-            <KeyBtn icon={<KeyboardReturn />} onClick={() => handlePress("enter")} label="Enter" />
-            <KeyBtn icon={<ContentCopy />} onClick={() => handlePress("ctrlC")} label="C" color="warning" />
-            <KeyBtn icon={<ContentPaste />} onClick={handlePaste} label="V" color="info" />
-          </Stack>
-        )
-      )}
+          ))}
     </Box>
   );
 }
@@ -107,17 +144,16 @@ interface KeyBtnProps {
   icon: React.ReactNode;
   onClick: () => void;
   label?: string;
-  color?: "warning" | "info";
-  sx?: any;
+  sx?: SxProps<Theme>;
 }
 
-function KeyBtn({ icon, onClick, label, color, sx }: KeyBtnProps) {
+function KeyBtn({ icon, onClick, label, sx }: KeyBtnProps) {
   return (
     <Button
       variant="outlined"
       size="small"
       onClick={onClick}
-      color={color || "inherit"}
+      color="inherit"
       sx={{
         minWidth: 44,
         minHeight: 40,
