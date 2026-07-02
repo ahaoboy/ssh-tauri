@@ -2,14 +2,11 @@
 
 mod commands;
 mod error;
-mod handler;
-mod io_loop;
+mod ssh;
 mod state;
 
-use commands::{
-    ssh_connect, ssh_disconnect, ssh_is_connected, ssh_resize, ssh_write,
-};
-use state::{AppState, SshState};
+use commands::{ssh_connect, ssh_disconnect, ssh_is_connected, ssh_resize, ssh_write};
+use state::AppState;
 use std::sync::Mutex;
 use tracing::info;
 
@@ -30,11 +27,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .manage(AppState {
-            ssh: Mutex::new(SshState {
-                handle: None,
-                control_tx: None,
-                reader_task: None,
-            }),
+            ssh: Mutex::new(None),
         })
         .invoke_handler(tauri::generate_handler![
             ssh_connect,

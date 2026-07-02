@@ -1,16 +1,15 @@
 // ── Application error type ──────────────────────────────────────────────
 
-/// All application errors, using `thiserror` for ergonomic `Display` impls.
+use crate::ssh::SshError;
+
+/// Application-level errors.
+///
+/// SSH-specific failures are forwarded from [`SshError`]; `Lock` and `Other`
+/// cover app-level concerns (state access, pre-condition checks).
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum AppError {
-    #[error("SSH connection failed: {0}")]
-    Connection(#[source] russh::Error),
-
-    #[error("Authentication failed: {0}")]
-    Auth(String),
-
-    #[error("I/O error: {0}")]
-    Io(#[from] std::io::Error),
+    #[error(transparent)]
+    Ssh(#[from] SshError),
 
     #[error("Internal state lock poisoned")]
     Lock,
@@ -19,13 +18,7 @@ pub(crate) enum AppError {
     Other(String),
 }
 
-impl From<russh::Error> for AppError {
-    fn from(e: russh::Error) -> Self {
-        AppError::Connection(e)
-    }
-}
-
-/// Tauri commands return `Result<(), String>`, so we convert.
+/// Tauri commands return `Result<T, String>`, so we convert.
 impl From<AppError> for String {
     fn from(e: AppError) -> String {
         e.to_string()
