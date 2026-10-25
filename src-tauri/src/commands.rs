@@ -4,8 +4,10 @@ use tauri::Emitter;
 use tracing::warn;
 
 use crate::error::AppError;
-use crate::ssh::{ConnectParams, SshEventSink, SshSession};
-use crate::state::AppState;
+use crate::ssh::{
+    CONNECT_TIMEOUT_SECS, ConnectParams, SshError, SshEventSink, SshSession,
+};
+use crate::state::{AppState, wait_cancelled};
 
 // ── Tauri ↔ SSH bridge ──────────────────────────────────────────────────
 
@@ -50,15 +52,40 @@ pub(crate) async fn ssh_connect(
         let _ = ssh.take();
     }
 
-    let session = SshSession::connect(params.into(), TauriSink { app })
-        .await
-        .map_err(AppError::from)?;
+    let (generation, cancel_rx) = state.connect_cancel.subscribe();
+
+    let result = tokio::select! {
+        result = tokio::time::timeout(
+            std::time::Duration::from_secs(CONNECT_TIMEOUT_SECS),
+            SshSession::connect(params.into(), TauriSink { app }),
+        ) => match result {
+            Ok(Ok(session)) => Ok(session),
+            Ok(Err(e)) => Err(e),
+            Err(_) => Err(SshError::Timeout),
+        },
+        _ = wait_cancelled(generation, cancel_rx) => {
+            Err(SshError::Other("Connection cancelled".into()))
+        }
+    };
+
+    let session = result.map_err(AppError::from)?;
 
     {
         let mut ssh = state.ssh.lock().map_err(|_| AppError::Lock)?;
         *ssh = Some(session);
     }
 
+    Ok(())
+}
+
+/// Cancel an in-flight SSH connection attempt.
+///
+/// Dropping the pending connect future closes the underlying TCP socket.
+#[tauri::command]
+pub(crate) async fn ssh_cancel_connect(
+    state: tauri::State<'_, AppState>,
+) -> Result<(), String> {
+    state.connect_cancel.cancel_all();
     Ok(())
 }
 

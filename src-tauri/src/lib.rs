@@ -5,8 +5,10 @@ mod error;
 mod ssh;
 mod state;
 
-use commands::{ssh_connect, ssh_disconnect, ssh_is_connected, ssh_resize, ssh_write};
-use state::AppState;
+use commands::{
+    ssh_cancel_connect, ssh_connect, ssh_disconnect, ssh_is_connected, ssh_resize, ssh_write,
+};
+use state::{AppState, ConnectCancel};
 use std::sync::Mutex;
 use tracing::info;
 
@@ -28,9 +30,11 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .manage(AppState {
             ssh: Mutex::new(None),
+            connect_cancel: ConnectCancel::default(),
         })
         .invoke_handler(tauri::generate_handler![
             ssh_connect,
+            ssh_cancel_connect,
             ssh_write,
             ssh_resize,
             ssh_disconnect,

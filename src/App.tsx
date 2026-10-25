@@ -139,7 +139,7 @@ export default function App() {
 
   // ── Connect to SSH server ────────────────────────────────────
   const handleConnect = useCallback(async () => {
-    if (!host || !username) return;
+    if (!host || !username || connectionState === "connecting") return;
 
     setConnectionState("connecting");
     setError("");
@@ -192,10 +192,29 @@ export default function App() {
       setSelectedConfigId(config.id);
     } catch (e) {
       console.error("SSH connection failed:", e);
-      setError(String(e));
+      const message = String(e);
+      if (/cancelled/i.test(message)) {
+        setError("");
+        setConnectionState("disconnected");
+        return;
+      }
+      const hint =
+        isMobile() && /timed out/i.test(message)
+          ? '\n\nAndroid 17+: allow the "Nearby devices" (local network) permission for SSH, then retry.'
+          : "";
+      setError(message + hint);
       setConnectionState("error");
     }
-  }, [host, port, username, authMethod, password, privateKey, command, reloadConfigs, savedConfigs]);
+  }, [host, port, username, authMethod, password, privateKey, command, connectionState, reloadConfigs, savedConfigs]);
+
+  // ── Cancel an in-flight connection attempt ─────────────────
+  const handleCancelConnect = useCallback(async () => {
+    try {
+      await invoke("ssh_cancel_connect");
+    } catch (e) {
+      console.warn("SSH cancel error:", e);
+    }
+  }, []);
 
   // ── Disconnect from SSH server ───────────────────────────────
   const handleDisconnect = useCallback(async () => {
@@ -233,6 +252,7 @@ export default function App() {
       onChange: handleFieldChange,
       onAuthMethodChange: setAuthMethod,
       onConnect: handleConnect,
+      onCancel: handleCancelConnect,
       onLoadConfig: handleLoadConfig,
       onSaveConfig: handleSaveConfig,
       onDeleteConfig: handleDeleteConfig,
@@ -253,6 +273,7 @@ export default function App() {
       savedConfigs,
       handleFieldChange,
       handleConnect,
+      handleCancelConnect,
       handleLoadConfig,
       handleSaveConfig,
       handleDeleteConfig,

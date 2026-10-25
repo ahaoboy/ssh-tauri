@@ -5,6 +5,9 @@ pub use sssh::Error as SshError;
 pub use sssh::EventSink as SshEventSink;
 pub use sssh::Session as SshSession;
 
+/// Total wall-clock budget for the connect + auth + shell startup sequence.
+pub(crate) const CONNECT_TIMEOUT_SECS: u64 = 20;
+
 /// Tauri-compatible connection parameters (serde-friendly, camelCase from JS).
 #[derive(Debug, Clone, Deserialize)]
 pub struct ConnectParams {
@@ -44,7 +47,8 @@ impl From<ConnectParams> for sssh::Config {
             command: p.command,
             cols: p.cols,
             rows: p.rows,
-            timeout_secs: None,
+            // Also let sssh apply its own TCP-connect timeout.
+            timeout_secs: Some(CONNECT_TIMEOUT_SECS),
             host_key_verifier: None,
         }
     }
